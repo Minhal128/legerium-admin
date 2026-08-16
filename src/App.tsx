@@ -10,18 +10,41 @@ import { SecurityPage } from '@/pages/security/SecurityPage'
 import { NotificationsPage } from '@/pages/notifications/NotificationsPage'
 import { SupportPage } from '@/pages/support/SupportPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
+import { authService } from '@/services/authService'
+
+// Protected Route wrapper component
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = authService.isAuthenticated()
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+  
+  return <>{children}</>
+}
+
+// Public Route wrapper - redirects to dashboard if already logged in
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = authService.isAuthenticated()
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+  
+  return <>{children}</>
+}
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Auth Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/forgot-password" element={<ResetPasswordPage />} />
+        {/* Auth Routes - Public only */}
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
 
-        {/* Dashboard Routes */}
-        <Route path="/" element={<DashboardLayout />}>
+        {/* Dashboard Routes - Protected */}
+        <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="transactions" element={<TransactionsPage />} />
@@ -33,8 +56,8 @@ function App() {
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Catch all - redirect to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   )
